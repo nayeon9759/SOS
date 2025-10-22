@@ -1,10 +1,10 @@
 /* 기존 디자인 그대로 유지 */
 :root{
-  --bg:#0f1724; /* 배경: 어두운 남색 */
-  --primary:#ff4d4f; /* 메인 색상: 밝은 빨강 (긴급) */
-  --accent:#ff9f43; /* 강조 색상: 주황 */
-  --card:#1f2a38; /* 카드 배경: 중간 어두운 색 */
-  --muted:#b9c0d7; /* 뮤트 텍스트 */
+  --bg:#0f1724; /* 배경: 어두운 남색 */
+  --primary:#ff4d4f; /* 메인 색상: 밝은 빨강 (긴급) */
+  --accent:#ff9f43; /* 강조 색상: 주황 */
+  --card:#1f2a38; /* 카드 배경: 중간 어두운 색 */
+  --muted:#b9c0d7; /* 뮤트 텍스트 */
 }
 
 *{box-sizing:border-box}
@@ -44,42 +44,49 @@ select,textarea,input[type="text"]{width:100%;padding:8px;border-radius:6px;back
 
 /* Submissions Section */
 .submissions-list{
-  margin-top:12px;
-  display:grid;
-  gap:8px;
-  max-height:300px;
-  overflow:auto;
-  padding-right:4px;
+  margin-top:12px;
+  display:grid;
+  gap:8px;
+  max-height:300px;
+  overflow:auto;
+  padding-right:4px;
 }
 .record{
-  background:rgba(255,255,255,0.02);
-  padding:8px;
-  border-radius:6px;
-  border-left: 3px solid var(--accent); /* 강조 표시 */
+  background:rgba(255,255,255,0.02);
+  padding:8px;
+  border-radius:6px;
+  border-left: 3px solid var(--accent); /* 강조 표시 */
 }
 .record div{
-    font-size: 13px;
-    line-height: 1.4;
-    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--muted);
 }
 .record strong{
-    color: #e6eef8;
-    font-weight: bold;
+    color: #e6eef8;
+    font-weight: bold;
 }
 .placeholder{
-    color: var(--muted);
-    text-align: center;
-    padding: 20px;
+    color: var(--muted);
+    text-align: center;
+    padding: 20px;
 }
 
 /* Charts */
 .charts{
-    margin-top: 20px;
+    margin-top: 20px;
 }
 .chart-title{
-    color: var(--primary);
-    margin: 20px 0 10px 0;
+    color: var(--primary);
+    margin: 20px 0 10px 0;
 }
+
+/* 🚨🚨🚨 그래프 출력을 위한 핵심 수정 🚨🚨🚨 */
+/* 캔버스 요소에 최소 높이를 지정하여 브라우저가 공간을 확보하도록 강제합니다. */
+.charts canvas {
+    min-height: 250px; 
+}
+/* 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨 */
 
 /* guide */
 .guide-card{padding:10px;background:rgba(255,255,255,0.01);border-radius:6px;border:1px solid rgba(255,255,255,0.1)}
