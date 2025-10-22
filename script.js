@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /**
    * 2. 서버에서 최신 데이터를 가져와 localSubmissions를 갱신하고, 화면을 다시 그리는 핵심 함수
-   * ⭐️ 제출 후, 새로고침 시 데이터가 사라지는 문제를 해결합니다. ⭐️
+   * ⭐️ 새로고침 시 데이터가 사라지는 문제를 해결합니다. ⭐️
    */
   const fetchSubmissions = async () => {
     try {
@@ -40,8 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
       
       if (Array.isArray(data)) {
         localSubmissions = data; 
-        renderSubmissions(); 
-        renderCharts();      
+        renderSubmissions(); // ⭐️ 목록 업데이트
+        renderCharts();      // ⭐️ 그래프 업데이트
       } else {
         submissionsList.innerHTML = '<div class="placeholder">데이터 로딩 실패: 서버 응답 형식이 올바르지 않습니다.</div>';
       }
@@ -63,7 +63,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       // 서버에 POST (데이터 저장)
-      // no-cors를 사용하여 응답을 기다리지 않고 데이터 저장이 되도록 합니다.
       await fetch(API_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -74,7 +73,6 @@ document.addEventListener("DOMContentLoaded", () => {
       msg.textContent = "💌 제출이 완료되었습니다! 최신 데이터로 그래프를 갱신합니다.";
       
       // ⭐️ 핵심: 데이터 저장 성공 후, 서버에서 최신 전체 데이터를 다시 불러와 갱신합니다.
-      // 이 과정이 서버에 데이터가 누적되도록 보장합니다.
       await fetchSubmissions(); 
 
       form.reset();
@@ -85,7 +83,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (error) {
       // no-cors로 인해 실제 오류가 아니더라도 catch에 걸릴 수 있습니다.
-      // 데이터가 저장되었을 가능성을 보고, 갱신을 시도합니다.
       msg.textContent = "⚠️ 서버 응답 오류 발생. 데이터 갱신을 시도합니다.";
       await fetchSubmissions(); 
       document.querySelector('.tab-btn[data-target="submissions"]').click();
@@ -101,12 +98,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
     
-    // 최근 10개만 표시 (필요시 .slice().reverse() 제거)
     localSubmissions.slice().reverse().forEach((sub) => {
       const card = document.createElement("div");
       card.className = "record";
       let html = Object.entries(sub)
-        // '기타'를 선택하지 않았을 때 '직접 입력 지역'이 보이지 않도록 필터링
         .filter(([k,v]) => !(k === "regionOther" && sub.region !== "기타") && v !== "")
         .map(([k,v]) => `<div><strong>${keyMap[k]||k}:</strong> ${v}</div>`)
         .join("");
@@ -145,9 +140,8 @@ document.addEventListener("DOMContentLoaded", () => {
             scales: { 
                 y: { 
                     beginAtZero: true, 
-                    // ⭐️ Y축 최소값 0 강제 설정하여 누적 효과 보장 ⭐️
                     suggestedMin: 0,
-                    // y축 값이 정수로만 표시되도록 설정 (0.1, 0.2 단위 오류 해결)
+                    // ⭐️ Y축 정수 단위 강제 설정 (0.1, 0.2 단위 오류 해결)
                     ticks: { stepSize: 1 } 
                 } 
             }
