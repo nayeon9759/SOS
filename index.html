@@ -1,123 +1,120 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>반려친구 긴급케어 설문</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>반려친구 긴급케어 설문</title>
 
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <main class="wrap">
-    <header class="hero">
-      <div class="hero-inner">
-        <h1>🐾 긴급! 24시 동물병원</h1>
-        <p class="lead">응급 상황—우리 서비스가 진짜 도움이 되도록, 솔직한 의견을 들려주세요.</p>
-      </div>
-    </header>
+  <main class="wrap">
+    <header class="hero">
+      <div class="hero-inner">
+        <h1>🐾 긴급! 24시 동물병원</h1>
+        <p class="lead">응급 상황—우리 서비스가 진짜 도움이 되도록, 솔직한 의견을 들려주세요.</p>
+      </div>
+    </header>
 
-    <nav class="tabs">
-      <button class="tab-btn active" data-target="survey">설문 참여</button>
-      <button class="tab-btn" data-target="guide">설문 안내</button>
-      <button class="tab-btn" data-target="submissions">다른 사람 의견 보기</button>
-    </nav>
+    <nav class="tabs">
+      <button class="tab-btn active" data-target="survey">설문 참여</button>
+      <button class="tab-btn" data-target="guide">설문 안내</button>
+      <button class="tab-btn" data-target="submissions">다른 사람 의견 보기</button>
+    </nav>
 
-    <!-- 설문 -->
-    <section id="survey" class="tab-panel active panel">
-      <form id="petSurveyForm" autocomplete="off">
-        <div class="form-card">
-          <label class="q">1. 반려동물을 키우시나요? <span class="required">*</span></label>
-          <div class="options inline">
-            <label><input type="radio" name="hasPet" value="예" required> 예</label>
-            <label><input type="radio" name="hasPet" value="아니오"> 아니오</label>
-          </div>
-        </div>
+        <section id="survey" class="tab-panel active panel">
+      <form id="petSurveyForm" autocomplete="off">
+        <div class="form-card">
+          <label class="q">1. 반려동물을 키우시나요? <span class="required">*</span></label>
+          <div class="options inline">
+            <label><input type="radio" name="hasPet" value="예" required> 예</label>
+            <label><input type="radio" name="hasPet" value="아니오"> 아니오</label>
+          </div>
+        </div>
 
-        <div class="form-card">
-          <label class="q">2. 당신이 사는 지역은 어디인가요?</label>
-          <div class="options">
-            <label><input type="radio" name="region" value="서울"> 서울</label>
-            <label><input type="radio" name="region" value="경기도"> 경기도</label>
-            <label><input type="radio" name="region" value="경상도"> 경상도</label>
-            <label><input type="radio" name="region" value="기타"> 기타</label>
-            <input type="text" name="regionOther" placeholder="직접 입력" style="display:none;">
-          </div>
-        </div>
+        <div class="form-card">
+          <label class="q">2. 당신이 사는 지역은 어디인가요?</label>
+          <div class="options">
+            <label><input type="radio" name="region" value="서울"> 서울</label>
+            <label><input type="radio" name="region" value="경기도"> 경기도</label>
+            <label><input type="radio" name="region" value="경상도"> 경상도</label>
+            <label><input type="radio" name="region" value="기타"> 기타</label>
+            <input type="text" name="regionOther" placeholder="직접 입력" style="display:none;">
+          </div>
+        </div>
 
-        <div class="form-card">
-          <label class="q">3. 병원 선택 시 가장 우선시하는 기준은? <span class="required">*</span></label>
-          <select name="priorityCriteria" required>
-            <option value="">선택하세요</option>
-            <option value="비용">비용</option>
-            <option value="직원의 친절도">직원의 친절도</option>
-            <option value="거리">거리</option>
-            <option value="병원의 평판">병원의 평판</option>
-            <option value="의료진의 전문성 및 경험">의료진의 전문성 및 경험</option>
-          </select>
-        </div>
+        <div class="form-card">
+          <label class="q">3. 병원 선택 시 가장 우선시하는 기준은? <span class="required">*</span></label>
+          <select name="priorityCriteria" required>
+            <option value="">선택하세요</option>
+            <option value="비용">비용</option>
+            <option value="직원의 친절도">직원의 친절도</option>
+            <option value="거리">거리</option>
+            <option value="병원의 평판">병원의 평판</option>
+            <option value="의료진의 전문성 및 경험">의료진의 전문성 및 경험</option>
+          </select>
+        </div>
 
-        <div class="form-card">
-          <label class="q">4. 응급 상황에서 우려되는 점과 필요한 서비스는?</label>
-          <textarea name="concernAndFeature" rows="4" placeholder="예: 야간 응급비용이 불투명 → 가격 투명성 & 예상비용 계산 기능"></textarea>
-        </div>
+        <div class="form-card">
+          <label class="q">4. 응급 상황에서 우려되는 점과 필요한 서비스는?</label>
+          <textarea name="concernAndFeature" rows="4" placeholder="예: 야간 응급비용이 불투명 → 가격 투명성 & 예상비용 계산 기능"></textarea>
+        </div>
 
-        <div class="form-card">
-          <label class="q">5. 응급 시 가장 중요한 정보는?</label>
-          <select name="priority1" required>
-            <option value="">1순위 선택</option>
-            <option value="현재 운영 여부">A. 현재 운영 여부</option>
-            <option value="주차 가능 여부">B. 주차 가능 여부</option>
-            <option value="주요 진료 과목">C. 주요 진료 과목</option>
-          </select>
-        </div>
+        <div class="form-card">
+          <label class="q">5. 응급 시 가장 중요한 정보는?</label>
+          <select name="priority1" required>
+            <option value="">1순위 선택</option>
+            <option value="현재 운영 여부">A. 현재 운영 여부</option>
+            <option value="주차 가능 여부">B. 주차 가능 여부</option>
+            <option value="주요 진료 과목">C. 주요 진료 과목</option>
+          </select>
+        </div>
 
-        <div class="form-card">
-          <label class="q">6. 응급 시 지불 의향 금액 범위는? <span class="required">*</span></label>
-          <div class="options grid">
-            <label><input type="radio" name="priceRange" value="50만원 미만" required> 50만원 미만</label>
-            <label><input type="radio" name="priceRange" value="50만원 ~ 100만원"> 50~100만원</label>
-            <label><input type="radio" name="priceRange" value="100만원 ~ 200만원"> 100~200만원</label>
-            <label><input type="radio" name="priceRange" value="200만원 이상"> 200만원 이상</label>
-          </div>
-        </div>
+        <div class="form-card">
+          <label class="q">6. 응급 시 지불 의향 금액 범위는? <span class="required">*</span></label>
+          <div class="options grid">
+            <label><input type="radio" name="priceRange" value="50만원 미만" required> 50만원 미만</label>
+            <label><input type="radio" name="priceRange" value="50만원 ~ 100만원"> 50~100만원</label>
+            <label><input type="radio" name="priceRange" value="100만원 ~ 200만원"> 100~200만원</label>
+            <label><input type="radio" name="priceRange" value="200만원 이상"> 200만원 이상</label>
+          </div>
+        </div>
 
-        <div class="form-actions">
-          <button type="submit" class="btn primary">제출하기</button>
-          <button type="reset" class="btn ghost">초기화</button>
-        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">제출하기</button>
+          <button type="reset" class="btn ghost">초기화</button>
+        </div>
 
-        <div id="msg"></div>
-      </form>
-    </section>
+        <div id="msg"></div>
+      </form>
+    </section>
 
-    <!-- 안내 -->
-    <section id="guide" class="tab-panel panel">
-      <div class="guide-card">
-        <h3>설문 안내</h3>
-        <p>응급 서비스 개선을 위한 익명 조사입니다.</p>
-      </div>
-    </section>
+        <section id="guide" class="tab-panel panel">
+      <div class="guide-card">
+        <h3>설문 안내</h3>
+        <p>응급 서비스 개선을 위한 익명 조사입니다.</p>
+      </div>
+    </section>
 
-    <!-- 제출 목록 + 그래프 -->
-    <section id="submissions" class="tab-panel panel">
-      <div id="submissionsList" class="submissions-list">
-        <div class="placeholder">제출된 기록이 없습니다.</div>
-      </div>
+        <section id="submissions" class="tab-panel panel">
+      <div id="submissionsList" class="submissions-list">
+        <div class="placeholder">제출된 기록이 없습니다.</div>
+      </div>
 
-      <div class="charts">
-        <h4 class="chart-title">지역 분포</h4>
-        <canvas id="regionChart"></canvas>
-        <h4 class="chart-title">응급 시 지불 의향 금액</h4>
-        <canvas id="priceChart"></canvas>
-      </div>
-    </section>
+      <div class="charts">
+        <h4 class="chart-title">지역 분포</h4>
+        <canvas id="regionChart"></canvas> 
+        <h4 class="chart-title">응급 시 지불 의향 금액</h4>
+        <canvas id="priceChart"></canvas> 
+      </div>
+    </section>
 
-    <footer class="footer">
-      <small>© 반려친구 긴급케어 설문</small>
-    </footer>
-  </main>
-
-  <script src="script.js"></script>
+    <footer class="footer">
+      <small>© 반려친구 긴급케어 설문</small>
+    </footer>
+  </main>
+  
+    <script src="script.js"></script>
 </body>
 </html>
