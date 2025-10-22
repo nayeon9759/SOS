@@ -1,12 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // 🚨 1. Google Apps Script URL (여기에 고객님의 배포 링크를 붙여넣으세요)
+  // 🚨 1. Google Apps Script URL (고객님 링크 삽입 완료)
   const API_URL = 'https://script.google.com/macros/s/AKfycbwfqm6JLNMXqL1MTumvEMuCp_IeBnddDMmIKocbQaMqOzXXayFz9DzdUWHnyt4LZEZ6AA/exec';
   
   const form = document.getElementById("petSurveyForm");
   const msg = document.getElementById("msg");
   const submissionsList = document.getElementById("submissionsList");
   const regionOtherInput = document.querySelector('input[name="regionOther"]');
-  const tabBtns = document.querySelectorAll(".tab-btn");
+  const tabBtns = document.querySelectorAll(".tab-btn"); // 모든 탭 버튼
 
   let localSubmissions = [];
 
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // 서버에 POST (데이터 저장)
       await fetch(API_URL, {
         method: 'POST',
-        mode: 'no-cors', // GAS 요청의 표준
+        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
@@ -74,26 +74,21 @@ document.addEventListener("DOMContentLoaded", () => {
       regionOtherInput.style.display = "none";
 
       // '다른 사람 의견 보기' 탭으로 전환
-      tabBtns.forEach(b => b.classList.remove("active"));
-      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-      document.querySelector('.tab-btn[data-target="submissions"]').classList.add("active");
-      document.getElementById("submissions").classList.add("active");
+      // 탭 전환을 위해 'submissions' 버튼의 click() 이벤트를 트리거합니다.
+      document.querySelector('.tab-btn[data-target="submissions"]').click();
+
 
     } catch (error) {
-      // no-cors 오류가 발생해도 데이터는 저장되었을 가능성이 높으므로 갱신을 시도
-      msg.textContent = "⚠️ 제출 오류 발생. 데이터 갱신을 시도합니다.";
+      msg.textContent = "⚠️ 서버 응답 오류 발생. 데이터 갱신을 시도합니다.";
       await fetchSubmissions(); 
       // 탭 활성화 로직 유지
-      tabBtns.forEach(b => b.classList.remove("active"));
-      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-      document.querySelector('.tab-btn[data-target="submissions"]').classList.add("active");
-      document.getElementById("submissions").classList.add("active");
+      document.querySelector('.tab-btn[data-target="submissions"]').click();
     }
   });
 
   // 4. submissions 렌더링
   const renderSubmissions = () => {
-    submissionsList.innerHTML = ""; // 중복을 막기 위해 목록을 먼저 비웁니다.
+    submissionsList.innerHTML = "";
     
     if (localSubmissions.length === 0) {
         submissionsList.innerHTML = '<div class="placeholder">제출된 기록이 없습니다.</div>';
@@ -139,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
         options: { 
             responsive: true, 
             plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, suggestedMin: 0 } } // Y축 최소값 0 강제 설정 (누적 보장)
+            scales: { y: { beginAtZero: true, suggestedMin: 0 } } // Y축 최소값 0 강제 설정
         }
       });
     };
@@ -151,11 +146,13 @@ document.addEventListener("DOMContentLoaded", () => {
     renderBarChart("priceChart", priceLabelsOrdered, priceDataOrdered, "rgba(255,159,67,0.7)");
   };
 
-  // 6. 탭 클릭 이벤트 (submissions 탭 클릭 시 서버 데이터 재요청)
+  // 6. 탭 클릭 이벤트 (탭 전환 및 submissions 탭 클릭 시 서버 데이터 재요청)
   tabBtns.forEach(btn => {
     btn.addEventListener("click", () => {
+      // ⭐️ 핵심 수정: 모든 탭/패널의 active 클래스를 제거하고, 현재 클릭된 요소에만 추가합니다.
       tabBtns.forEach(b => b.classList.remove("active"));
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      
       btn.classList.add("active");
       document.getElementById(btn.dataset.target).classList.add("active");
 
@@ -165,10 +162,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // 7. 초기 서버 데이터 로드 (페이지 로드 시 데이터 한번 가져오기)
+  // 7. 초기 서버 데이터 로드 
   fetchSubmissions();
 
-  // "기타" 입력 토글 (지역 기타 입력 필드 제어)
+  // "기타" 입력 토글
   document.querySelectorAll('input[name="region"]').forEach(radio => {
     radio.addEventListener('change', () => {
       if (radio.value === "기타") {
