@@ -4,13 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>반려친구 긴급케어 설문</title>
-
-  <!-- CSS -->
+  
   <link rel="stylesheet" href="styles.css">
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
   <main class="wrap">
     <header class="hero">
@@ -60,12 +57,12 @@
         </div>
 
         <div class="form-card">
-          <label class="q">4. 응급 상황에서 우려되는 점과 필요한 서비스 기능은 무엇인가요? <span class="required">*</span></label>
+          <label class="q">4. 응급 상황에서 우려되는 점과, 필요한 서비스 기능은 무엇인가요?” <span class="required">*</span></label>
           <textarea name="concernAndFeature" rows="5" placeholder="예: 야간 응급비용이 불투명 → 가격 투명성 & 예상비용 계산 기능" required></textarea>
         </div>
 
         <div class="form-card">
-          <label class="q">5. 응급 시 병원 정보에서 '가장 중요한 정보(1순위)'와 '두 번째로 중요한 정보(2순위)'를 선택해주세요. <span class="required">*</span></label>
+          <label class="q">5. 응급 상황 시 병원 정보에서 '가장 중요한 정보(1순위)'와 '두 번째로 중요한 정보(2순위)'를 선택해주세요. <span class="required">*</span></label>
           <div class="priority-grid">
             <div>
               <label class="small">1순위</label>
@@ -89,7 +86,7 @@
         </div>
 
         <div class="form-card">
-          <label class="q">6. 응급 시 지불 의향 금액은? <span class="required">*</span></label>
+          <label class="q">6. 반려동물 응급 시 최대 지불 의향 금액 범위는? <span class="required">*</span></label>
           <div class="options grid">
             <label><input type="radio" name="priceRange" value="50만원 미만" required> A. 50만원 미만</label>
             <label><input type="radio" name="priceRange" value="50만원 ~ 100만원"> B. 50만원 ~ 100만원</label>
@@ -135,7 +132,6 @@
     </footer>
   </main>
 
-  <!-- JS -->
   <script src="script.js"></script>
 </body>
 </html>
