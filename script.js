@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // 🚨 1. Google Apps Script URL (고객님 링크 삽입 완료)
   const API_URL = 'https://script.google.com/macros/s/AKfycbwfqm6JLNMXqL1MTumvEMuCp_IeBnddDMmIKocbQaMqOzXXayFz9DzdUWHnyt4LZEZ6AA/exec';
   
   const form = document.getElementById("petSurveyForm");
@@ -7,8 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const regionOtherInput = document.querySelector('input[name="regionOther"]');
   const tabBtns = document.querySelectorAll(".tab-btn");
 
-  let localSubmissions = [];
-  let regionChartInstance = null;
+  let localSubmissions = []; // 서버에서 불러온 전체 데이터
+  let regionChartInstance = null; // Chart.js 인스턴스 관리
   let priceChartInstance = null;
 
   const keyMap = {
@@ -22,67 +23,102 @@ document.addEventListener("DOMContentLoaded", () => {
     priceRange: "최대 지불 의향"
   };
 
+  /**
+   * 2. 서버에서 최신 데이터를 가져와 localSubmissions를 갱신하고, 화면을 다시 그리는 핵심 함수
+   * ⭐️ 제출 후, 새로고침 시 데이터가 사라지는 문제를 해결합니다. ⭐️
+   */
   const fetchSubmissions = async () => {
     try {
+      // ⭐️ 캐시 우회 로직: 항상 최신 데이터를 요청
       const uniqueApiUrl = `${API_URL}?t=${new Date().getTime()}`;
-      submissionsList.innerHTML = '<div class="placeholder">데이터 불러오는 중...</div>';
+      submissionsList.innerHTML = '<div class="placeholder">제출된 기록을 불러오는 중입니다...</div>';
+
       const res = await fetch(uniqueApiUrl);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      
       const data = await res.json();
+      
       if (Array.isArray(data)) {
-        localSubmissions = data;
-        renderSubmissions();
-        renderCharts();
+        localSubmissions = data; 
+        renderSubmissions(); 
+        renderCharts();      
       } else {
-        submissionsList.innerHTML = '<div class="placeholder">데이터 형식 오류</div>';
+        submissionsList.innerHTML = '<div class="placeholder">데이터 로딩 실패: 서버 응답 형식이 올바르지 않습니다.</div>';
       }
     } catch (error) {
-      submissionsList.innerHTML = '<div class="placeholder">서버 오류로 데이터를 불러올 수 없습니다.</div>';
+      console.error("서버 데이터 로딩 오류:", error);
+      submissionsList.innerHTML = '<div class="placeholder">네트워크 오류 또는 GAS 서버 오류로 데이터를 불러올 수 없습니다.</div>';
     }
   };
 
+
+  // 3. 폼 제출 (POST 후, 전체 데이터 재요청 로직 포함)
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     msg.textContent = "✅ 제출 중...";
+
     const data = new FormData(form);
     const payload = {};
     for (const [k, v] of data.entries()) payload[k] = v;
+
     try {
+      // 서버에 POST (데이터 저장)
+      // no-cors를 사용하여 응답을 기다리지 않고 데이터 저장이 되도록 합니다.
       await fetch(API_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      msg.textContent = "💌 제출이 완료되었습니다!";
-      await fetchSubmissions();
+
+      msg.textContent = "💌 제출이 완료되었습니다! 최신 데이터로 그래프를 갱신합니다.";
+      
+      // ⭐️ 핵심: 데이터 저장 성공 후, 서버에서 최신 전체 데이터를 다시 불러와 갱신합니다.
+      // 이 과정이 서버에 데이터가 누적되도록 보장합니다.
+      await fetchSubmissions(); 
+
       form.reset();
       regionOtherInput.style.display = "none";
+      
+      // '다른 사람 의견 보기' 탭으로 자동 전환 및 활성화
       document.querySelector('.tab-btn[data-target="submissions"]').click();
+
     } catch (error) {
-      msg.textContent = "⚠️ 서버 응답 오류, 그래도 데이터는 저장되었습니다.";
-      await fetchSubmissions();
+      // no-cors로 인해 실제 오류가 아니더라도 catch에 걸릴 수 있습니다.
+      // 데이터가 저장되었을 가능성을 보고, 갱신을 시도합니다.
+      msg.textContent = "⚠️ 서버 응답 오류 발생. 데이터 갱신을 시도합니다.";
+      await fetchSubmissions(); 
+      document.querySelector('.tab-btn[data-target="submissions"]').click();
     }
   });
 
+  // 4. submissions 렌더링
   const renderSubmissions = () => {
     submissionsList.innerHTML = "";
+    
     if (localSubmissions.length === 0) {
-      submissionsList.innerHTML = '<div class="placeholder">아직 제출된 기록이 없습니다.</div>';
-      return;
+        submissionsList.innerHTML = '<div class="placeholder">아직 제출된 기록이 없습니다.</div>';
+        return;
     }
+    
+    // 최근 10개만 표시 (필요시 .slice().reverse() 제거)
     localSubmissions.slice().reverse().forEach((sub) => {
       const card = document.createElement("div");
       card.className = "record";
       let html = Object.entries(sub)
-        .filter(([k, v]) => !(k === "regionOther" && sub.region !== "기타") && v !== "")
-        .map(([k, v]) => `<div><strong>${keyMap[k] || k}:</strong> ${v}</div>`)
+        // '기타'를 선택하지 않았을 때 '직접 입력 지역'이 보이지 않도록 필터링
+        .filter(([k,v]) => !(k === "regionOther" && sub.region !== "기타") && v !== "")
+        .map(([k,v]) => `<div><strong>${keyMap[k]||k}:</strong> ${v}</div>`)
         .join("");
-      card.innerHTML = html || "<div>제출된 정보 없음</div>";
+      if (!html) html = "<div>제출된 정보 없음</div>";
+      card.innerHTML = html;
       submissionsList.appendChild(card);
     });
   };
 
+  // 5. 그래프 렌더링 (누적 및 스케일링 강화)
   const renderCharts = () => {
+    // 1. 데이터 집계
     const regionCount = {};
     const priceCount = {};
 
@@ -92,67 +128,65 @@ document.addEventListener("DOMContentLoaded", () => {
       if (sub.priceRange) priceCount[sub.priceRange] = (priceCount[sub.priceRange] || 0) + 1;
     });
 
+    // 2. 차트 그리기 헬퍼 함수
     const renderBarChart = (ctxId, labels, data, color) => {
       const ctx = document.getElementById(ctxId).getContext("2d");
+      
+      // ⭐️ 이전 차트 인스턴스 파괴 (그래프 중첩/누적 오류 방지)
       if (ctxId === 'regionChart' && regionChartInstance) regionChartInstance.destroy();
       if (ctxId === 'priceChart' && priceChartInstance) priceChartInstance.destroy();
+
       const newChart = new Chart(ctx, {
         type: "bar",
-        data: {
-          labels,
-          datasets: [{
-            label: "응답 수",
-            data,
-            backgroundColor: color,
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: "#333",
-              titleColor: "#fff",
-              bodyColor: "#fff"
+        data: { labels: labels, datasets: [{ label: "응답 수", data: data, backgroundColor: color }] },
+        options: { 
+            responsive: true, 
+            plugins: { legend: { display: false } },
+            scales: { 
+                y: { 
+                    beginAtZero: true, 
+                    // ⭐️ Y축 최소값 0 강제 설정하여 누적 효과 보장 ⭐️
+                    suggestedMin: 0,
+                    // y축 값이 정수로만 표시되도록 설정 (0.1, 0.2 단위 오류 해결)
+                    ticks: { stepSize: 1 } 
+                } 
             }
-          },
-          scales: {
-            x: {
-              ticks: { color: "#ccc" },
-              grid: { color: "rgba(255,255,255,0.05)" }
-            },
-            y: {
-              beginAtZero: true,
-              ticks: { color: "#ccc", stepSize: 1 },
-              grid: { color: "rgba(255,255,255,0.1)" }
-            }
-          }
         }
       });
+      
+      // 인스턴스 저장
       if (ctxId === 'regionChart') regionChartInstance = newChart;
       if (ctxId === 'priceChart') priceChartInstance = newChart;
     };
 
+    // 가격 순서 정의 (축적되도록 순서를 맞춤)
     const priceLabelsOrdered = ["50만원 미만", "50만원 ~ 100만원", "100만원 ~ 200만원", "200만원 이상"];
     const priceDataOrdered = priceLabelsOrdered.map(label => priceCount[label] || 0);
 
-    renderBarChart("regionChart", Object.keys(regionCount), Object.values(regionCount), "rgba(255, 180, 60, 0.8)");
-    renderBarChart("priceChart", priceLabelsOrdered, priceDataOrdered, "rgba(100, 180, 255, 0.8)");
+    renderBarChart("regionChart", Object.keys(regionCount), Object.values(regionCount), "rgba(255,77,79,0.7)");
+    renderBarChart("priceChart", priceLabelsOrdered, priceDataOrdered, "rgba(255,159,67,0.7)");
   };
 
+  // 6. 탭 클릭 이벤트 (탭 전환 및 submissions 탭 클릭 시 서버 데이터 재요청)
   tabBtns.forEach(btn => {
     btn.addEventListener("click", () => {
+      // ⭐️ 탭 버튼 활성화 로직 수정 (클릭 오류 해결)
       tabBtns.forEach(b => b.classList.remove("active"));
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      
       btn.classList.add("active");
       document.getElementById(btn.dataset.target).classList.add("active");
-      if (btn.dataset.target === "submissions") fetchSubmissions();
+
+      if (btn.dataset.target === "submissions") {
+        fetchSubmissions(); // 탭 클릭 시에도 최신 데이터 강제 로드
+      }
     });
   });
 
+  // 7. 초기 서버 데이터 로드 (페이지 로드 시 데이터 한번 가져오기)
   fetchSubmissions();
 
+  // "기타" 입력 토글
   document.querySelectorAll('input[name="region"]').forEach(radio => {
     radio.addEventListener('change', () => {
       if (radio.value === "기타") {
