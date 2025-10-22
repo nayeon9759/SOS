@@ -1,278 +1,178 @@
-// =======================================================
-// 전역 변수 설정
-// =======================================================
-const API_URL = "https://script.google.com/macros/s/AKfycbwfqm6JLNMXqL1MTumvEMuCp_IeBnddDMmIKocbQaMqOzXXayFz9DzdUWHnyt4LZEZ6AA/exec"; // ★★★ 고객님께서 제공하신 API_URL ★★★
-const SUBMISSIONS_KEY = 'petSurveySubmissions';
-let submissions = JSON.parse(localStorage.getItem(SUBMISSIONS_KEY)) || [];
-let regionChart = null; // 지역 분포 차트 객체
-let priceChart = null;  // 지불 의향 금액 차트 객체
+document.addEventListener("DOMContentLoaded", () => {
+  // Google Apps Script URL
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwfqm6JLNMXqL1MTumvEMuCp_IeBnddDMiKocbQaMqOzXXayFz9DzdUWHnyt4LZEZ6AA/exec';
+  
+  const form = document.getElementById("petSurveyForm");
+  const msg = document.getElementById("msg");
+  const submissionsList = document.getElementById("submissionsList");
+  const regionOtherInput = document.querySelector('input[name="regionOther"]');
+  const tabBtns = document.querySelectorAll(".tab-btn");
 
-// =======================================================
-// DOM 로드 완료 후 초기화 함수
-// =======================================================
-document.addEventListener('DOMContentLoaded', () => {
-    // 탭 전환 기능 초기화
-    initTabs();
-    
-    // 지역 '기타' 입력 필드 활성화/비활성화
-    initRegionInput();
-    
-    // 저장된 제출 목록 렌더링 및 차트 초기 생성
-    renderSubmissions();
-    updateCharts(); // ★ 차트 초기화 및 생성 (작동하도록 수정됨) ★
-    
-    // 폼 제출 이벤트 리스너
-    document.getElementById('petSurveyForm').addEventListener('submit', handleFormSubmit);
-});
+  let localSubmissions = [];
 
-// =======================================================
-// 탭 전환 기능
-// =======================================================
-function initTabs() {
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabPanels = document.querySelectorAll('.tab-panel');
-    
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const targetId = button.getAttribute('data-target');
-            
-            // 모든 버튼 비활성화, 클릭된 버튼 활성화
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            
-            // 모든 패널 숨김, 타겟 패널 표시
-            tabPanels.forEach(panel => panel.classList.remove('active'));
-            document.getElementById(targetId).classList.add('active');
-            
-            // 제출 목록 탭으로 이동 시 차트 업데이트
-            if (targetId === 'submissions') {
-                updateCharts();
-            }
-        });
-    });
-}
+  // Key map
+  const keyMap = {
+    hasPet: "반려동물 보유",
+    region: "지역",
+    priorityCriteria: "병원 선택 기준",
+    concernAndFeature: "불만/필요 기능",
+    priority1: "1순위 정보",
+    priority2: "2순위 정보",
+    priceRange: "최대 지불 의향"
+  };
 
-// =======================================================
-// 지역 '기타' 입력 로직
-// =======================================================
-function initRegionInput() {
-    const regionRadios = document.querySelectorAll('input[name="region"]');
-    const regionOtherInput = document.querySelector('input[name="regionOther"]');
+  // 서버에서 최신 데이터 가져오기
+  const fetchSubmissions = async () => {
+    try {
+      const uniqueApiUrl = `${API_URL}?t=${new Date().getTime()}`;
+      submissionsList.innerHTML = '<div class="placeholder">제출된 기록을 불러오는 중입니다...</div>'; 
 
-    regionRadios.forEach(radio => {
-        radio.addEventListener('change', (event) => {
-            if (event.target.value === '기타') {
-                regionOtherInput.style.display = 'block';
-                regionOtherInput.setAttribute('required', 'required');
-            } else {
-                regionOtherInput.style.display = 'none';
-                regionOtherInput.removeAttribute('required');
-                regionOtherInput.value = ''; 
-            }
-        });
-    });
-}
+      const res = await fetch(uniqueApiUrl);
+      const data = await res.json();
 
-// =======================================================
-// 폼 제출 처리 함수 (Google Apps Script 연동)
-// =======================================================
-function handleFormSubmit(event) {
-    event.preventDefault();
-    
-    const form = event.target;
-    const formData = new FormData(form);
-    const msgElement = document.getElementById('msg');
-    
-    // 로딩 메시지
-    msgElement.textContent = '⏳ 제출 중...';
-    msgElement.style.color = '#ff9f43';
-    
-    // 폼 데이터를 Google Apps Script 형식에 맞게 준비
-    const submissionData = {};
-    for (const [key, value] of formData.entries()) {
-        if (key === 'region' && value === '기타' && formData.get('regionOther')) {
-            // '기타' 지역의 경우, 직접 입력 값을 사용
-            submissionData[key] = formData.get('regionOther'); 
-        } else if (key !== 'regionOther') {
-            submissionData[key] = value;
-        }
-    }
-    if (submissionData.region === '기타' && !formData.get('regionOther')) {
-        submissionData.region = '기타';
-    }
-
-    // FormData를 URLSearchParams로 변환하여 fetch에 전달
-    const params = new URLSearchParams();
-    for (const key in submissionData) {
-        params.append(key, submissionData[key]);
-    }
-
-    // API_URL을 사용하여 데이터 전송 (Google Apps Script)
-    fetch(API_URL, { // ★★★ API_URL 변수 사용 ★★★
-        method: 'POST',
-        body: params,
-        mode: 'no-cors' // Google Script에 데이터를 전송할 때 CORS 문제 방지
-    })
-    .then(response => {
-        // 'no-cors' 모드에서는 응답 상태를 확인할 수 없으므로,
-        // 에러가 발생하지 않으면 성공으로 간주하고 로컬 처리 진행
-        
-        // 로컬 저장소 및 차트 업데이트
-        submissions.push(submissionData);
-        localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(submissions));
-
-        // 성공 메시지 표시
-        msgElement.textContent = '✅ 설문이 성공적으로 제출되었습니다!';
-        msgElement.style.color = 'lime';
-        
-        // 폼 초기화
-        form.reset();
-        document.querySelector('input[name="regionOther"]').style.display = 'none';
-
-        // 제출 목록 및 차트 업데이트
+      if (Array.isArray(data)) {
+        localSubmissions = data;
         renderSubmissions();
-        updateCharts();
-    })
-    .catch(error => {
-        console.error('Error submitting form:', error);
-        msgElement.textContent = '❌ 제출 실패. 네트워크 또는 스크립트 연결을 확인하세요.';
-        msgElement.style.color = '#ff4d4f';
+        renderSummaryCards(); // 요약 카드 갱신
+      } else {
+        submissionsList.innerHTML = '<div class="placeholder">데이터 로딩 실패</div>';
+      }
+    } catch (error) {
+      console.error("서버 데이터 로딩 오류:", error);
+      submissionsList.innerHTML = '<div class="placeholder">네트워크 오류</div>';
+    }
+  };
+
+  // "기타" 입력 토글
+  document.querySelectorAll('input[name="region"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (radio.value === "기타") {
+        regionOtherInput.style.display = "block";
+        regionOtherInput.required = true;
+      } else {
+        regionOtherInput.style.display = "none";
+        regionOtherInput.required = false;
+        regionOtherInput.value = "";
+      }
     });
-}
+  });
 
-// =======================================================
-// 제출 목록 렌더링 함수 (로컬 데이터 사용)
-// =======================================================
-function renderSubmissions() {
-    const listElement = document.getElementById('submissionsList');
-    listElement.innerHTML = ''; 
+  // 폼 제출
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    msg.textContent = "✅ 제출 중...";
 
-    if (submissions.length === 0) {
-        listElement.innerHTML = '<div class="placeholder">제출된 기록이 없습니다.</div>';
-        return;
+    const data = new FormData(form);
+    const payload = {};
+    for (const [k, v] of data.entries()) payload[k] = v;
+
+    if (payload.region === "기타" && payload.regionOther) {
+      payload.region = payload.regionOther;
+    }
+    delete payload.regionOther;
+
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      msg.textContent = "💌 제출이 완료되었습니다! 데이터 갱신 중...";
+      form.reset();
+      regionOtherInput.style.display = "none";
+
+      await fetchSubmissions();
+
+      // '다른 사람 의견 보기' 탭으로 이동
+      tabBtns.forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector('.tab-btn[data-target="submissions"]').classList.add("active");
+      document.getElementById("submissions").classList.add("active");
+
+    } catch (error) {
+      msg.textContent = "⚠️ 서버 오류 발생. 데이터를 불러옵니다.";
+      await fetchSubmissions();
+    }
+  });
+
+  // submissions 렌더링
+  const renderSubmissions = () => {
+    submissionsList.innerHTML = "";
+
+    if (localSubmissions.length === 0) {
+      submissionsList.innerHTML = '<div class="placeholder">제출된 기록이 없습니다.</div>';
+      return;
     }
 
-    // 최신 제출 순으로 역순 정렬하여 보여줍니다.
-    [...submissions].reverse().forEach((sub) => { 
-        const recordDiv = document.createElement('div');
-        recordDiv.className = 'record';
-        
-        // 각 답변을 형식에 맞게 표시
-        recordDiv.innerHTML = `
-            <div><strong>지역:</strong> ${sub.region || '-'}</div>
-            <div><strong>반려동물:</strong> ${sub.hasPet || '-'}</div>
-            <div><strong>우선 기준:</strong> ${sub.priorityCriteria || '-'}</div>
-            <div><strong>지불 의향:</strong> ${sub.priceRange || '-'}</div>
-            <div><strong>응급 정보 1순위:</strong> ${sub.priority1 || '-'}</div>
-            <div><strong>우려점/필요 기능:</strong> ${sub.concernAndFeature ? sub.concernAndFeature.substring(0, 50) + '...' : '-'}</div>
-        `;
-        
-        listElement.appendChild(recordDiv);
+    localSubmissions.slice().reverse().forEach(sub => {
+      const card = document.createElement("div");
+      card.className = "record";
+      let html = Object.entries(sub)
+        .filter(([k, v]) => v !== "" && k !== "Timestamp")
+        .map(([k, v]) => `<div><strong>${keyMap[k] || k}:</strong> ${v}</div>`)
+        .join("");
+      if (!html) html = "<div>제출된 정보 없음</div>";
+      card.innerHTML = html;
+      submissionsList.appendChild(card);
     });
-}
+  };
 
+  // 요약 카드 렌더링
+  const renderSummaryCards = () => {
+    const counts = { region: {}, priceRange: {} };
+    localSubmissions.forEach(sub => {
+      if (sub.region) counts.region[sub.region] = (counts.region[sub.region] || 0) + 1;
+      if (sub.priceRange) counts.priceRange[sub.priceRange] = (counts.priceRange[sub.priceRange] || 0) + 1;
+    });
 
-// =======================================================
-// ★★★ 차트 업데이트/생성 함수 (로컬 데이터 사용) ★★★
-// =======================================================
-function updateCharts() {
-    if (submissions.length === 0) {
-        // 데이터가 없으면 차트를 지웁니다.
-        if (regionChart) regionChart.destroy();
-        if (priceChart) priceChart.destroy();
-        return;
+    // 기존 요약 영역 초기화
+    const summaryArea = document.querySelector('.summary-cards');
+    if (summaryArea) summaryArea.remove();
+
+    const container = document.createElement('div');
+    container.className = 'summary-cards';
+
+    // 지역별 카드
+    const regionCard = document.createElement('div');
+    regionCard.className = 'summary-card';
+    regionCard.innerHTML = `<h4>지역 통계</h4>`;
+    for (const key of ["서울", "경기도", "경상도", "기타"]) {
+      const val = counts.region[key] || 0;
+      const bar = `<div style="width:${val*20}px;background:var(--accent);margin:2px 0;padding:2px;border-radius:4px;">${key} (${val})</div>`;
+      regionCard.innerHTML += bar;
     }
+    container.appendChild(regionCard);
 
-    // 1. 지역 분포 데이터 집계
-    const regionCounts = submissions.reduce((acc, item) => {
-        const region = item.region || '미응답'; 
-        acc[region] = (acc[region] || 0) + 1;
-        return acc;
-    }, {});
-    
-    const regionLabels = Object.keys(regionCounts);
-    const regionData = Object.values(regionCounts);
-    
-    // 2. 지불 의향 금액 데이터 집계
-    const priceOrder = ["50만원 미만", "50만원 ~ 100만원", "100만원 ~ 200만원", "200만원 이상", "미응답"];
-    const priceCounts = submissions.reduce((acc, item) => {
-        const price = item.priceRange || '미응답';
-        acc[price] = (acc[price] || 0) + 1;
-        return acc;
-    }, {});
+    // 최대 지불 의향 카드
+    const priceCard = document.createElement('div');
+    priceCard.className = 'summary-card';
+    priceCard.innerHTML = `<h4>최대 지불 의향</h4>`;
+    for (const key of ["50만원 미만","50만원 ~ 100만원","100만원 ~ 200만원","200만원 이상"]) {
+      const val = counts.priceRange[key] || 0;
+      const bar = `<div style="width:${val*20}px;background:var(--primary);margin:2px 0;padding:2px;border-radius:4px;">${key} (${val})</div>`;
+      priceCard.innerHTML += bar;
+    }
+    container.appendChild(priceCard);
 
-    const priceLabels = priceOrder.filter(label => Object.keys(priceCounts).includes(label));
-    const priceData = priceLabels.map(label => priceCounts[label] || 0);
+    document.getElementById("submissions").prepend(container);
+  };
 
-    // =======================================================
-    // 차트 생성 (기존 차트가 있으면 제거 후 재생성)
-    // =======================================================
-    // =======================================================
-    // 차트 생성 (기존 차트가 있으면 제거 후 재생성)
-    // =======================================================
+  // 탭 클릭
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.target).classList.add("active");
 
-    // 1. 지역 분포 차트 (도넛 차트)
-    const ctxRegion = document.getElementById('regionChart').getContext('2d');
-    if (regionChart) regionChart.destroy(); 
-    regionChart = new Chart(ctxRegion, {
-        type: 'doughnut',
-        data: {
-            labels: regionLabels,
-            datasets: [{
-                data: regionData,
-                backgroundColor: ['#ff4d4f', '#ff9f43', '#1e90ff', '#7fff00', '#aaaaaa'], 
-                hoverOffset: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: 'white' } 
-                },
-                title: {
-                    display: false,
-                }
-            }
-        }
+      if (btn.dataset.target === "submissions") {
+        fetchSubmissions();
+      }
     });
+  });
 
-    // 2. 지불 의향 금액 차트 (막대 차트)
-    const ctxPrice = document.getElementById('priceChart').getContext('2d');
-    if (priceChart) priceChart.destroy(); 
-    priceChart = new Chart(ctxPrice, {
-        type: 'bar',
-        data: {
-            labels: priceLabels,
-            datasets: [{
-                label: '응답자 수',
-                data: priceData,
-                backgroundColor: '#ff4d4f', 
-                borderColor: '#ff4d4f',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        color: 'white', 
-                        stepSize: 1, 
-                    },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' } 
-                },
-                x: {
-                    ticks: { color: 'white' }, 
-                    grid: { display: false } 
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                title: { display: false }
-            }
-        }
-    });
-}
+  // 초기 데이터 로드
+  fetchSubmissions();
+});
